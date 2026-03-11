@@ -1,47 +1,150 @@
 import java.util.Scanner;
-class UsernameChecker{
-    static String[] users = new String[100];
-    static int[] freq = new int[100];
-    static int count = 0;
-    static boolean check(String name){
-        for(int i=0;i<count;i++){
-            if(users[i].equals(name)){
-                freq[i]++;
-                return false;
-            }
+
+class Node {
+    String key;
+    int value;
+    Node next;
+
+    Node(String key, int value) {
+        this.key = key;
+        this.value = value;
+        this.next = null;
+    }
+}
+
+class HashTable {
+    int size = 10007;
+    Node[] table;
+
+    HashTable() {
+        table = new Node[size];
+    }
+
+    int hash(String key) {
+        int h = 0;
+        for (int i = 0; i < key.length(); i++) {
+            h = (h * 31 + key.charAt(i)) % size;
         }
-        users[count]=name;
-        freq[count]=1;
-        count++;
+        return h;
+    }
+
+    void put(String key, int value) {
+        int index = hash(key);
+        Node head = table[index];
+
+        while (head != null) {
+            if (head.key.equals(key)) {
+                head.value = value;
+                return;
+            }
+            head = head.next;
+        }
+
+        Node newNode = new Node(key, value);
+        newNode.next = table[index];
+        table[index] = newNode;
+    }
+
+    boolean contains(String key) {
+        int index = hash(key);
+        Node head = table[index];
+
+        while (head != null) {
+            if (head.key.equals(key)) {
+                return true;
+            }
+            head = head.next;
+        }
+
+        return false;
+    }
+
+    int get(String key) {
+        int index = hash(key);
+        Node head = table[index];
+
+        while (head != null) {
+            if (head.key.equals(key)) {
+                return head.value;
+            }
+            head = head.next;
+        }
+
+        return 0;
+    }
+}
+
+public class UsernameChecker {
+
+    static HashTable users = new HashTable();
+    static HashTable attempts = new HashTable();
+
+    static boolean checkAvailability(String username) {
+
+        int count = attempts.get(username);
+        attempts.put(username, count + 1);
+
+        if (users.contains(username)) {
+            return false;
+        }
+
         return true;
     }
-    static void suggest(String name){
-        for(int i=1;i<=3;i++){
-            System.out.println(name+i);
-        }
+
+    static void registerUser(String username, int userId) {
+        users.put(username, userId);
     }
-    static void popular(){
-        int max=0,idx=0;
-        for(int i=0;i<count;i++){
-            if(freq[i]>max){
-                max=freq[i];
-                idx=i;
+
+    static void suggestAlternatives(String username) {
+
+        for (int i = 1; i <= 3; i++) {
+            String suggestion = username + i;
+
+            if (!users.contains(suggestion)) {
+                System.out.println(suggestion);
             }
         }
-        System.out.println(users[idx]+" "+max);
+
+        String alt = username.replace('_', '.');
+
+        if (!users.contains(alt)) {
+            System.out.println(alt);
+        }
     }
-    public static void main(String[] args){
-        Scanner sc=new Scanner(System.in);
-        int n=sc.nextInt();
-        for(int i=0;i<n;i++){
-            String u=sc.next();
-            if(check(u))
-                System.out.println("Available");
-            else{
-                System.out.println("Taken");
-                suggest(u);
+
+    static String getMostAttempted() {
+
+        String maxUser = "";
+        int max = 0;
+
+        for (int i = 0; i < attempts.size; i++) {
+
+            Node head = attempts.table[i];
+
+            while (head != null) {
+
+                if (head.value > max) {
+                    max = head.value;
+                    maxUser = head.key;
+                }
+
+                head = head.next;
             }
         }
-        popular();
+
+        return maxUser;
+    }
+
+    public static void main(String[] args) {
+
+        registerUser("john_doe", 1);
+        registerUser("admin", 2);
+
+        System.out.println(checkAvailability("john_doe"));
+        System.out.println(checkAvailability("jane_smith"));
+
+        suggestAlternatives("john_doe");
+
+        System.out.println(getMostAttempted());
     }
 }
